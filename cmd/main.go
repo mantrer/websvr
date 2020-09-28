@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-const root string = "/site/sunsea.ru/public"
+const root string = "/site/hugo/sunsea.ru/public/"
 
 func main() {
 
@@ -15,5 +15,5 @@ func main() {
 	http.Handle("/", handler)
 
 	fmt.Println("starting server at :8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8000", nil)
 }
