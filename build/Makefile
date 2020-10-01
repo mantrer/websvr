@@ -13,7 +13,7 @@ clean:
 build: clean
 	@echo "  >  Building binary..."
 #	go  build -o $(APP) $(GOFILES)
-	go build \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build --tags netgo \
 		-ldflags "-s -w -X 127.0.0.1/version.Release=${RELEASE} \
 		-X 127.0.0.1/version.Commit=${COMMIT} -X 127.0.0.1/version.BuildTime=${BUILD_TIME}" \
 		-o ${APP} ${GOFILES}

@@ -4,7 +4,12 @@ package main
 import (
 	"log"
 	"net/http"
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
+	//"fmt"
+	"127.0.0.1/version"
 	"go.uber.org/zap"
 )
 
@@ -14,8 +19,8 @@ type config struct {
 	Port string
 }
 
-func (c *config) New() {
-	c.Port = getEnv("PORT")
+func New() *config {
+	return &config{Port: getEnv("PORT")}
 }
 
 
@@ -26,10 +31,10 @@ func getEnv(key string) string {
 		zap.S().Fatalf("Variable %s is not initialized", key)
 	}
 	if value == "" {
-		zap.S().Fatalf("Variable %s is empty", key)	
-	} 
+		zap.S().Fatalf("Variable %s is empty", key)
+	}
 	return value
-}	
+}
 
 func loggerInit() {
 		// init logger & replace global logger
@@ -40,17 +45,46 @@ func loggerInit() {
 		  }
 		defer logger.Sync()
 }
+func healthz(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
 
 func main() {
 	loggerInit()
 	sugar := zap.S()
-	
+
+	log.Printf(
+		"Starting the service...\ncommit: %s, build time: %s, release: %s",
+		version.Commit, version.BuildTime, version.Release,
+	)
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
 	handler := http.FileServer(http.Dir(root))
 	http.Handle("/", handler)
-	cfg := new(config)
-	cfg.New()
+	http.HandleFunc("/healthz", healthz)
+	cfg := New()
 	port:=cfg.Port
 	sugar.Infof ("Starting server at :%s", port)
-	sugar.Fatal(http.ListenAndServe(":"+port, nil))
+
+	svr := http.Server{
+		Addr: ":" + port,
+	}
+	go func() {
+		//sugar.Fatal(http.ListenAndServe(":"+port, nil))
+		sugar.Fatal(svr.ListenAndServe())
+	}()
+	killSignal := <-interrupt
+
+	switch killSignal {
+	case os.Interrupt:
+		sugar.Info("Got SIGINT...")
+	case syscall.SIGTERM:
+		sugar.Info("Got SIGTERM...")
+	}
+	sugar.Info("The service is shutting down...")
+	svr.Shutdown(context.Background())
+	log.Print("Done")
 
 }
