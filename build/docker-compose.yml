@@ -3,11 +3,22 @@ version: '3'
 services:
   websvr:
     # A container that exposes an API to show its IP address
-    image: nginx
+    image: websvr:0.0.1
     labels:
-      - "traefik.http.routers.websvr.rule=Host(`sunsea.ru`)"
-      
-    restart: always
+      - "traefik.http.routers.websvr-url1.entrypoints=websecure"
+      - "traefik.http.routers.websvr-url2.entrypoints=websecure"
+      - "traefik.http.routers.websvr-url1.tls=true"
+      - "traefik.http.routers.websvr-url2.tls=true"
+      - "traefik.http.routers.websvr-url1.tls.certresolver=letsEncrypt"
+      - "traefik.http.routers.websvr-url2.tls.certresolver=letsEncrypt"
+      - "traefik.http.routers.websvr-url1.rule=Host(`sunsea.ru`)"
+      - "traefik.http.routers.websvr-url2.rule=Host(`www.sunsea.ru`)"
     volumes:
-      - /site/hugo:/site
+        - /site/hugo:/site      
+    restart: always
+networks:
+  default:
+    # Use a custom driver
+    external:
+      name: custom-net
      

@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const root string = "/site/hugo/sunsea.ru/public/"
+const root string = "/site/sunsea.ru/public"
 
 type config struct {
 	Port string
@@ -45,6 +45,7 @@ func loggerInit() {
 		  }
 		defer logger.Sync()
 }
+
 func healthz(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
@@ -73,7 +74,8 @@ func main() {
 	}
 	go func() {
 		//sugar.Fatal(http.ListenAndServe(":"+port, nil))
-		sugar.Fatal(svr.ListenAndServe())
+		//sugar.Fatal(svr.ListenAndServe())
+		svr.ListenAndServe()
 	}()
 	killSignal := <-interrupt
 
@@ -85,6 +87,6 @@ func main() {
 	}
 	sugar.Info("The service is shutting down...")
 	svr.Shutdown(context.Background())
-	log.Print("Done")
+	sugar.Info("Done")
 
 }
